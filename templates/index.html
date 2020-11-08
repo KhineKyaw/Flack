@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>Flack</title>
+    </head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css')}}">
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+
+    {% if not user_name %}
+        <div class="container-fluid login-body">
+            <div class="login">
+              <h2>Flack</h2>
+              <form id="login-form" action="{{ url_for('index') }}" method="post">
+                  <div class="form-group">
+                      <input type="text" name="name" class="form-control logintxtbox" placeholder="Name">
+                  </div>
+                  <div class="">
+                      <button type="submit" name="button" class="btn loginbutton">Enter</button>
+                  </div>
+              </form>
+            </div>
+        </div>
+    {% else %}
+        <script type="text/javascript">
+            var active_chatroom = "{{ active_chatroom }}".replace(/-/g, ' ');
+            document.addEventListener('DOMContentLoaded', () => {
+                var activeChat = document.querySelector("[data-page='" + active_chatroom + "']");
+                activeChat.id = "active_chat";
+            });
+        </script>
+        <script src="{{ url_for('static', filename='index.js') }}"></script>
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.min.js"></script>
+
+        <!-- Handlebars templates -->
+        <script id="message" type="text/x-handlebars-template">
+          {% raw -%}
+            {{#if date_time}}
+            <div class="sperator row"><span class="name-tag date-tag">{{ date_time }}</span></div>
+            {{/if}}
+          {%- endraw %}
+            <div class="sperator row"><span class="name-tag">{% raw -%}{{ user_name }}{%- endraw %}</span></div>
+            <div class="row message-row">
+              <span class="usr-icon">{% raw -%}{{ user_name.[0] }}{%- endraw %}</span>
+                <div class="col-8 message-left">
+                  <span class="msg msg-left">
+                    {% raw -%}
+                        {{ contents }}
+                    {%- endraw %}
+                  </span>
+                </div>
+            </div>
+        </script>
+
+        <script id="message_my" type="text/x-handlebars-template">
+            <!--<div class="sperator row"></div>-->
+            {% raw -%}
+              {{#if date_time}}
+              <div class="sperator row"><span class="name-tag date-tag">{{ date_time }}</span></div>
+              {{/if}}
+            {%- endraw %}
+            <div class="row message-row">
+                <div class="col-4 blank">
+                </div>
+                <div class="col-8 message-right">
+                    <span class="msg msg-right">
+                      {% raw -%}
+                          {{ contents }}
+                      {%- endraw %}
+                    </span>
+                </div>
+            </div>
+        </script>
+
+        <script id="new_channel" type="text/x-handlebars-template">
+            <a href="" class="list-group-item" data-page="{% raw -%} {{ contents }} {%- endraw %}">
+              {% raw -%} {{ contents }} {%- endraw %}
+            </a>
+        </script>
+
+        <script id="channel_header" type="text/x-handlebars-template">
+            <div class="channel_head">
+               {% raw -%} {{ contents }} {%- endraw %}
+            </div>
+        </script>
+
+        <script id="image_msg_my" type="text/x-handlebars-template">
+          {% raw -%}
+            {{#if date_time}}
+            <div class="sperator row"><span class="name-tag date-tag">{{ date_time }}</span></div>
+            {{/if}}
+          {%- endraw %}
+          <div class="row message-row">
+              <div class="col-6 blank">
+              </div>
+              <div class="col-6 image-container-right">
+                    <img class="image_info img-right" src="{% raw -%} {{ contents }} {%- endraw %}">
+              </div>
+          </div>
+        </script>
+
+        <script id="image_msg" type="text/x-handlebars-template">
+          {% raw -%}
+            {{#if date_time}}
+            <div class="sperator row"><span class="name-tag date-tag">{{ date_time }}</span></div>
+            {{/if}}
+          {%- endraw %}
+          <div class="sperator row"><span class="name-tag">{% raw -%}{{ user_name }}{%- endraw %}</span></div>
+          <div class="row message-row">
+              <span class="usr-icon">{% raw -%}{{ user_name.[0] }}{%- endraw %}</span>
+              <div class="col-6 image-container-left">
+                    <img class="image_info" src="{% raw -%} {{ contents }} {%- endraw %}">
+              </div>
+          </div>
+        </script>
+
+        <body>
+          <div class="container-fluid chat-body">
+              <div class="row">
+                  <div class="sidenav fixed-top">
+                      <div class="sidebarheader">
+                        <div class="row">
+                          <div class="col-9 headertext">
+                            <h3><i class="fa fa-comments"></i></h3>
+                          </div>
+                          <div class="col-3">
+                            <button type="button" name="button" class="border-white text-white btn sidebutton">Toggle</button>
+                          </div>
+                      </div>
+                    </div>
+
+                      <div class="bodybackground">
+                      </div>
+
+                      <div class="sidebarbody">
+                          <div class="user-div">
+                            <span class="usr-icon-main">{{ user_name[0] }}</span>
+                            <span id="userName">{{ user_name }}</span>
+                          </div>
+                          <h5 class="channel">Channels</h5>
+                          <ul class="list-group list-group-flush">
+                            {% for room in chat_rooms %}
+                                <a href="" class="list-group-item" data-page="{{ room }}">{{ room }}</a>
+                            {% endfor %}
+                          </ul>
+                          <div class="add_channel">
+                              <i class="far fa-plus-square"></i>
+                              <a href="" class="AddChannel">Add Channel</a>
+                              <form id="add-chn-submit">
+                                <input type="text" name="channel" class="form-control logintxtbox channel-box" placeholder="Channel Name">
+                              </form>
+                          </div>
+                      </div>
+
+                      <div class="sidebarfooter">
+                          <button type="button" name="button" class="btn logout">Logout</button>
+                      </div>
+                  </div>
+
+                <div class="main col-sm col-md">
+                    <!--Messages here!-->
+                </div>
+                <div class="textbox fixed-bottom row">
+                  <form id="submit-form" class="row">
+                      <div class="form-group col-10">
+                          <input type="text" class="form-control inputfield" placeholder="Aa">
+                      </div>
+                      <div class="col-2">
+                          <button type="submit" name="button" class="btn submitbutton"><i class="fa fa-paper-plane"></i></button>
+                      </div>
+                  </form>
+                  <div class="">
+                    <input type="file" id="imgs" accept="image/*" style="display: none">
+                    <button name="image-button" class="btn img-button" onclick="document.getElementById('imgs').click();"><i class="fa fa-image"></i></button>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </body>
+    {% endif %}
+</html>
