@@ -1,3 +1,3 @@
 # Project 2
 
-Web Programming with Python and JavaScript
+Second projet for Web Programming with Python and JavaScript course.
